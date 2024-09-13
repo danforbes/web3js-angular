@@ -7,7 +7,7 @@ import { Web3Service } from './web3/web3.service';
   standalone: true,
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
 })
 export class AppComponent {
   private web3: Web3Service;
