@@ -1,12 +1,14 @@
-import { Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { Injectable, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
 
-import { EIP1193Provider, ProviderRpcError, Web3, Web3APISpec } from 'web3';
+import { BlockHeaderOutput, EIP1193Provider, ProviderInfo, ProviderRpcError, Web3, Web3APISpec } from 'web3';
+import { NewHeadsSubscription } from 'web3-eth';
 
 @Injectable({
   providedIn: 'root',
 })
-export class Web3Service {
-  private web3: Web3 | undefined;
+export class Web3Service implements OnDestroy {
+  private web3: Web3 = new Web3();
+  utils = this.web3.utils;
 
   private _connected: WritableSignal<boolean> = signal(false);
   connected: Signal<boolean> = this._connected.asReadonly();
@@ -14,69 +16,62 @@ export class Web3Service {
   private _chainId: WritableSignal<bigint> = signal(0n);
   chainId: Signal<bigint> = this._chainId.asReadonly();
 
+  private _blockNumber: WritableSignal<bigint> = signal(0n);
+  blockNumber: Signal<bigint> = this._blockNumber.asReadonly();
+  private blockNumberSubscription: NewHeadsSubscription | undefined;
+
   constructor() {
     if (!window.ethereum) {
-      console.error('No injected Web3 providers.');
       return;
     }
 
-    this.web3 = new Web3(window.ethereum);
-    const utils = this.web3.utils;
-
-    window.ethereum.on('disconnect', (error: ProviderRpcError) => {
-      console.error(`Web3 provider disconnected: ${error}`);
-      this.web3 = undefined;
-      this._connected.set(false);
-      this._chainId.set(0n);
-    });
+    this.web3.setProvider(window.ethereum);
     this._connected.set(true);
-
-    window.ethereum.on('chainChanged', (chainId: string) => {
-      this._chainId.set(utils.toBigInt(chainId));
-    });
     this.web3.eth.getChainId().then(this._chainId.set);
-  }
+    this.web3.eth.getBlockNumber().then(this._blockNumber.set);
 
-  get blockNumber(): Signal<bigint> {
-    const blockNumber = signal(0n);
-    if (!this.web3) {
-      console.error('Not connected to Web3.');
-      return blockNumber;
-    }
-
-    const eth = this.web3.eth;
-    const utils = this.web3.utils;
-
-    eth.getBlockNumber().then(blockNumber.set);
-
-    if (window.ethereum) {
-      window.ethereum.on('chainChanged', () => {
-        eth.getBlockNumber().then(blockNumber.set);
-      });
-    }
-
-    this.web3.eth.subscribe('newBlockHeaders').then((subscription) => {
-      subscription.on('data', (data) => {
-        blockNumber.set(utils.toBigInt(data.number));
+    this.web3.eth.subscribe('newBlockHeaders').then((subscription: NewHeadsSubscription) => {
+      this.blockNumberSubscription = subscription;
+      subscription.on('data', (data: BlockHeaderOutput) => {
+        this._blockNumber.set(this.web3.utils.toBigInt(data.number));
       });
     });
 
-    return blockNumber;
+    window.ethereum.on('disconnect', this.handleDisconnect);
+    window.ethereum.on("connect", this.handleConnect);
+    window.ethereum.on('chainChanged', this.handleChainChanged);
   }
 
-  get accounts(): Signal<string[]> {
-    const accounts = signal(new Array<string>());
-    if (!this.web3) {
-      console.error('Not connected to Web3.');
-      return accounts;
+  ngOnDestroy(): void {
+    if (this.blockNumberSubscription) {
+      this.blockNumberSubscription.unsubscribe();
     }
 
     if (window.ethereum) {
-      window.ethereum.on('accountsChanged', accounts.set);
+      window.ethereum.removeListener('disconnect', this.handleDisconnect);
+      window.ethereum.removeListener("connect", this.handleConnect);
+      window.ethereum.removeListener("connect", this.handleConnect);
     }
+  }
 
-    this.web3.eth.requestAccounts().then(accounts.set);
-    return accounts;
+  private handleDisconnect(error: ProviderRpcError): void {
+    console.error(`Web3 provider disconnected: ${error}`);
+    this.web3.setProvider(undefined);
+    this._connected.set(false);
+    this._chainId.set(0n);
+    this._blockNumber.set(0n);
+  }
+
+  private async handleConnect(info: ProviderInfo): Promise<void> {
+    this.web3.setProvider(window.ethereum);
+    this._connected.set(true);
+    this._chainId.set(this.utils.toBigInt(info.chainId));
+    this._blockNumber.set(await this.web3.eth.getBlockNumber());
+  }
+
+  private async handleChainChanged(chainId: string) {
+    this._chainId.set(this.web3.utils.toBigInt(chainId));
+    this._blockNumber.set(await this.web3.eth.getBlockNumber());
   }
 }
 
