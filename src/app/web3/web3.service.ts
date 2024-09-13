@@ -1,6 +1,19 @@
-import { Injectable, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
+import {
+  Injectable,
+  OnDestroy,
+  signal,
+  Signal,
+  WritableSignal,
+} from '@angular/core';
 
-import { BlockHeaderOutput, EIP1193Provider, ProviderInfo, ProviderRpcError, Web3, Web3APISpec } from 'web3';
+import {
+  BlockHeaderOutput,
+  EIP1193Provider,
+  ProviderInfo,
+  ProviderRpcError,
+  Web3,
+  Web3APISpec,
+} from 'web3';
 import { NewHeadsSubscription } from 'web3-eth';
 
 @Injectable({
@@ -30,15 +43,17 @@ export class Web3Service implements OnDestroy {
     this.web3.eth.getChainId().then(this._chainId.set);
     this.web3.eth.getBlockNumber().then(this._blockNumber.set);
 
-    this.web3.eth.subscribe('newBlockHeaders').then((subscription: NewHeadsSubscription) => {
-      this.blockNumberSubscription = subscription;
-      subscription.on('data', (data: BlockHeaderOutput) => {
-        this._blockNumber.set(this.web3.utils.toBigInt(data.number));
+    this.web3.eth
+      .subscribe('newBlockHeaders')
+      .then((subscription: NewHeadsSubscription) => {
+        this.blockNumberSubscription = subscription;
+        subscription.on('data', (data: BlockHeaderOutput) => {
+          this._blockNumber.set(this.web3.utils.toBigInt(data.number));
+        });
       });
-    });
 
     window.ethereum.on('disconnect', this.handleDisconnect);
-    window.ethereum.on("connect", this.handleConnect);
+    window.ethereum.on('connect', this.handleConnect);
     window.ethereum.on('chainChanged', this.handleChainChanged);
   }
 
@@ -49,8 +64,8 @@ export class Web3Service implements OnDestroy {
 
     if (window.ethereum) {
       window.ethereum.removeListener('disconnect', this.handleDisconnect);
-      window.ethereum.removeListener("connect", this.handleConnect);
-      window.ethereum.removeListener("connect", this.handleConnect);
+      window.ethereum.removeListener('connect', this.handleConnect);
+      window.ethereum.removeListener('connect', this.handleConnect);
     }
   }
 
