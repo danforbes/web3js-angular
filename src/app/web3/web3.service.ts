@@ -11,6 +11,9 @@ export class Web3Service {
   private _connected: WritableSignal<boolean> = signal(false);
   connected: Signal<boolean> = this._connected.asReadonly();
 
+  private _chainId: WritableSignal<bigint> = signal(0n);
+  chainId: Signal<bigint> = this._chainId.asReadonly();
+
   constructor() {
     if (!window.ethereum) {
       console.error("No injected Web3 providers.");
@@ -18,13 +21,20 @@ export class Web3Service {
     }
 
     this.web3 = new Web3(window.ethereum);
+    const utils = this.web3.utils;
+
     window.ethereum.on("disconnect", (error: ProviderRpcError) => {
       console.error(`Web3 provider disconnected: ${error}`);
       this.web3 = undefined;
       this._connected.set(false);
+      this._chainId.set(0n);
     });
-
     this._connected.set(true);
+
+    window.ethereum.on("chainChanged", (chainId: string) => {
+      this._chainId.set(utils.toBigInt(chainId));
+    });
+    this.web3.eth.getChainId().then(this._chainId.set);
   }
 
   get blockNumber(): Signal<bigint> {
@@ -34,7 +44,17 @@ export class Web3Service {
       return blockNumber;
     }
 
+    const eth = this.web3.eth;
     const utils = this.web3.utils;
+
+    eth.getBlockNumber().then(blockNumber.set);
+
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", () => {
+        eth.getBlockNumber().then(blockNumber.set);
+      });
+    }
+
     this.web3.eth.subscribe("newBlockHeaders").then((subscription) => {
       subscription.on("data", (data) => {
         blockNumber.set(utils.toBigInt(data.number));
@@ -51,14 +71,17 @@ export class Web3Service {
       return accounts;
     }
 
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", accounts.set);
+    }
+
     this.web3.eth.requestAccounts().then(accounts.set);
-    window.ethereum.on("accountsChanged", (accounts.set));
     return accounts;
   }
 }
 
 declare global {
   interface Window {
-    ethereum: EIP1193Provider<Web3APISpec>;
+    ethereum?: EIP1193Provider<Web3APISpec>;
   }
 }

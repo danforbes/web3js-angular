@@ -1,6 +1,7 @@
 <main>
   <h1>Web3.js + Angular Template</h1>
   @if (connected()) {
+    <p>Chain ID: {{ chainId() }}</p>
     <p>Block number: {{ blockNumber() }}</p>
     <p>Accounts: {{ accounts() }}</p>
   } @else {

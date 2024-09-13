@@ -13,12 +13,14 @@ export class AppComponent {
   private web3: Web3Service;
 
   connected: Signal<boolean>;
+  chainId: Signal<bigint>;
   blockNumber: Signal<bigint>;
   accounts: Signal<string[]>;
 
   constructor(web3Service: Web3Service) {
     this.web3 = web3Service;
     this.connected = this.web3.connected;
+    this.chainId = this.web3.chainId;
     this.blockNumber = this.web3.blockNumber;
     this.accounts = this.web3.accounts;
   }
