@@ -52,6 +52,10 @@ export class Web3Service implements OnDestroy {
     window.ethereum.on('chainChanged', this.handleChainChanged);
   }
 
+  async requestAccounts(): Promise<string[]> {
+    return await this.web3.eth.requestAccounts();
+  }
+
   ngOnDestroy(): void {
     if (this.blockNumberSubscription) {
       this.blockNumberSubscription.unsubscribe();

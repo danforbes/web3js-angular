@@ -9,6 +9,11 @@
   } @else {
     <p>Chain ID: {{ chainId() }}</p>
     <p>Block number: {{ blockNumber() }}</p>
+    @if (!connectedAccounts()) {
+      <button (click)="requestAccounts()">Connect Accounts</button>
+    } @else {
+      <app-accounts></app-accounts>
+    }
   }
 </main>
 
