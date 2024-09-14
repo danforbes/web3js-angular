@@ -1,6 +1,7 @@
-@if (accounts().length !== 0) {
-  <p *ngFor="let account of accounts(); index as idx">
-    Account #{{ idx }}: {{ account }}
+<p>Selected account: {{ selectedAccount() }}</p>
+@if (accounts().length > 1) {
+  <p>Other available accounts:</p>
+  <p *ngFor="let account of accounts() | slice: 1; index as idx">
+    Account #{{ idx + 1 }}: {{ account }}
   </p>
-  <p>Selected account: {{ accounts()[0] }}</p>
 }

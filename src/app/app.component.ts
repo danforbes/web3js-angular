@@ -30,19 +30,22 @@ export class AppComponent implements OnDestroy {
     this.hasProvider = this.web3.hasProvider;
     this.chainId = this.web3.chainId;
     this.blockNumber = this.web3.blockNumber;
-  }
-
-  async requestAccounts(): Promise<void> {
-    try {
-      const accounts = await this.web3.requestAccounts();
+    this.web3.getAccounts().then((accounts: string[]) => {
       if (accounts.length === 0) {
         return;
       }
 
       this.connectedAccounts.set(true);
-      if (window.ethereum) {
-        window.ethereum.on('accountsChanged', this.accountsChangedHandler);
-      }
+    });
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', this.accountsChangedHandler);
+    }
+  }
+
+  async requestAccounts(): Promise<void> {
+    try {
+      await this.web3.requestAccounts();
     } catch {
       console.error('Failed to request accounts.');
     }
@@ -60,8 +63,6 @@ export class AppComponent implements OnDestroy {
   }
 
   private handleAccountsChanged(accounts: ProviderAccounts) {
-    if (accounts.length === 0) {
-      this.connectedAccounts.set(false);
-    }
+    this.connectedAccounts.set(accounts.length !== 0);
   }
 }

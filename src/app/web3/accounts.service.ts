@@ -1,6 +1,7 @@
 import {
+  computed,
   Injectable,
-  OnDestroy,
+  type OnDestroy,
   type Signal,
   signal,
   type WritableSignal,
@@ -14,6 +15,7 @@ import { ProviderAccounts } from 'web3';
 export class AccountsService implements OnDestroy {
   private _accounts: WritableSignal<string[]> = signal([]);
   accounts: Signal<string[]> = this._accounts.asReadonly();
+  selectedAccount: Signal<string> = computed(() => this.accounts()[0]);
 
   private accountsChangedHandler: (accounts: ProviderAccounts) => void =
     this.handleAccountsChanged.bind(this);
