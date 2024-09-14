@@ -1,10 +1,14 @@
 <main>
   <h1>Web3.js + Angular Template</h1>
-  @if (connected()) {
+  @if (!hasProvider) {
+    <p>No Ethereum providers - install a browser extension wallet:</p>
+    <p><a href="https://www.enkrypt.com/download.html">Enkrypt</a></p>
+    <p><a href="https://www.exodus.com/download/">Exodus</a></p>
+    <p><a href="https://metamask.io/download/">MetaMask</a></p>
+    <p><a href="https://trustwallet.com/download">Trust Wallet</a></p>
+  } @else {
     <p>Chain ID: {{ chainId() }}</p>
     <p>Block number: {{ blockNumber() }}</p>
-  } @else {
-    <p>Not connected to Web3.</p>
   }
 </main>
 

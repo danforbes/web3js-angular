@@ -1,30 +1,27 @@
 import {
   Injectable,
-  OnDestroy,
+  type OnDestroy,
   signal,
-  Signal,
-  WritableSignal,
+  type Signal,
+  type WritableSignal,
 } from '@angular/core';
 
 import {
-  BlockHeaderOutput,
-  EIP1193Provider,
-  ProviderInfo,
-  ProviderRpcError,
+  type BlockHeaderOutput,
+  type EIP1193Provider,
   Web3,
-  Web3APISpec,
+  type Web3APISpec,
 } from 'web3';
-import { NewHeadsSubscription } from 'web3-eth';
+import { type NewHeadsSubscription } from 'web3-eth';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Web3Service implements OnDestroy {
+  hasProvider = false;
+
   private web3: Web3 = new Web3();
   utils = this.web3.utils;
-
-  private _connected: WritableSignal<boolean> = signal(false);
-  connected: Signal<boolean> = this._connected.asReadonly();
 
   private _chainId: WritableSignal<bigint> = signal(0n);
   chainId: Signal<bigint> = this._chainId.asReadonly();
@@ -38,8 +35,8 @@ export class Web3Service implements OnDestroy {
       return;
     }
 
+    this.hasProvider = true;
     this.web3.setProvider(window.ethereum);
-    this._connected.set(true);
     this.web3.eth.getChainId().then(this._chainId.set);
     this.web3.eth.getBlockNumber().then(this._blockNumber.set);
 
@@ -52,8 +49,6 @@ export class Web3Service implements OnDestroy {
         });
       });
 
-    window.ethereum.on('disconnect', this.handleDisconnect);
-    window.ethereum.on('connect', this.handleConnect);
     window.ethereum.on('chainChanged', this.handleChainChanged);
   }
 
@@ -63,30 +58,12 @@ export class Web3Service implements OnDestroy {
     }
 
     if (window.ethereum) {
-      window.ethereum.removeListener('disconnect', this.handleDisconnect);
-      window.ethereum.removeListener('connect', this.handleConnect);
-      window.ethereum.removeListener('connect', this.handleConnect);
+      window.ethereum.removeListener('chainChanged', this.handleChainChanged);
     }
   }
 
-  private handleDisconnect(error: ProviderRpcError): void {
-    console.error(`Web3 provider disconnected: ${error}`);
-    this.web3.setProvider(undefined);
-    this._connected.set(false);
-    this._chainId.set(0n);
-    this._blockNumber.set(0n);
-  }
-
-  private async handleConnect(info: ProviderInfo): Promise<void> {
-    this.web3.setProvider(window.ethereum);
-    this._connected.set(true);
-    this._chainId.set(this.utils.toBigInt(info.chainId));
-    this._blockNumber.set(await this.web3.eth.getBlockNumber());
-  }
-
-  private async handleChainChanged(chainId: string) {
-    this._chainId.set(this.web3.utils.toBigInt(chainId));
-    this._blockNumber.set(await this.web3.eth.getBlockNumber());
+  private async handleChainChanged() {
+    window.location.reload();
   }
 }
 
