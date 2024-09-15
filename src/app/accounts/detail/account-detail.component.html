@@ -1,1 +1,17 @@
 <div>Balance: {{ balance() }}</div>
+<form [formGroup]="transferForm" (ngSubmit)="transfer()">
+  <label for="to">Transfer to: </label>
+  <input id="to" type="text" formControlName="to" />
+
+  <span style="padding-right: 5px"></span>
+
+  <label for="amount">Transfer amount in wei: </label>
+  <input id="amount" type="number" formControlName="amount" />
+
+  <span style="padding-right: 5px"></span>
+
+  <button type="submit" [disabled]="!transferForm.valid">Transfer</button>
+</form>
+<div *ngFor="let transaction of transactions">
+  {{ transaction() }}
+</div>

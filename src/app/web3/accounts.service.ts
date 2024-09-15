@@ -13,6 +13,10 @@ import { Address, type ProviderAccounts, type Web3 } from 'web3';
   providedIn: 'root',
 })
 export class AccountsService implements OnDestroy {
+  static isValidAddress(address: Address): boolean {
+    return /^(0x)?[0-9a-fA-F]{40}$/.test(address);
+  }
+
   private web3: Web3;
 
   private _accounts: WritableSignal<string[]> = signal([]);
@@ -33,7 +37,7 @@ export class AccountsService implements OnDestroy {
   }
 
   getBalance(address: Address): Promise<bigint> {
-    if (!/^(0x)?[0-9a-fA-F]{40}$/.test(address)) {
+    if (!AccountsService.isValidAddress(address)) {
       return Promise.resolve(0n);
     }
 
