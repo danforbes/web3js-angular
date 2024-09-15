@@ -7,7 +7,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Web3Service } from './web3.service';
-import { type ProviderAccounts, type Web3 } from 'web3';
+import { Address, type ProviderAccounts, type Web3 } from 'web3';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +30,14 @@ export class AccountsService implements OnDestroy {
     this.web3 = web3Service.web3;
     this.web3.eth.requestAccounts().then(this._accounts.set);
     web3Service.provider.on('accountsChanged', this.accountsChangedHandler);
+  }
+
+  getBalance(address: Address): Promise<bigint> {
+    if (!/^(0x)?[0-9a-fA-F]{40}$/.test(address)) {
+      return Promise.resolve(0n);
+    }
+
+    return this.web3.eth.getBalance(address);
   }
 
   ngOnDestroy(): void {
