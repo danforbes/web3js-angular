@@ -1,17 +1,18 @@
 <main>
   <h1>Web3.js + Angular Template</h1>
   @if (!hasProvider) {
-    <p>No Ethereum providers - install a browser extension wallet:</p>
-    <p><a href="https://www.enkrypt.com/download.html">Enkrypt</a></p>
-    <p><a href="https://www.exodus.com/download/">Exodus</a></p>
-    <p><a href="https://metamask.io/download/">MetaMask</a></p>
-    <p><a href="https://trustwallet.com/download">Trust Wallet</a></p>
+    <div>No Ethereum providers - install a browser extension wallet:</div>
+    <div><a href="https://www.enkrypt.com/download.html">Enkrypt</a></div>
+    <div><a href="https://www.exodus.com/download/">Exodus</a></div>
+    <div><a href="https://metamask.io/download/">MetaMask</a></div>
+    <div><a href="https://trustwallet.com/download">Trust Wallet</a></div>
   } @else {
-    <p>Chain ID: {{ chainId() }}</p>
-    <p>Block number: {{ blockNumber() }}</p>
-    @if (!connectedAccounts()) {
+    <div>Chain ID: {{ chainId() }}</div>
+    <div>Block number: {{ blockNumber() }}</div>
+    @if (!hasAccounts()) {
       <button (click)="requestAccounts()">Connect Accounts</button>
     } @else {
+      <br />
       <app-accounts></app-accounts>
     }
   }

@@ -18,10 +18,8 @@ import { type NewHeadsSubscription } from 'web3-eth';
   providedIn: 'root',
 })
 export class Web3Service implements OnDestroy {
-  hasProvider = false;
-
-  private web3: Web3 = new Web3();
-  utils = this.web3.utils;
+  provider: EIP1193Provider<Web3APISpec> | undefined;
+  web3: Web3 = new Web3();
 
   private _chainId: WritableSignal<bigint> = signal(0n);
   chainId: Signal<bigint> = this._chainId.asReadonly();
@@ -35,8 +33,8 @@ export class Web3Service implements OnDestroy {
       return;
     }
 
-    this.hasProvider = true;
-    this.web3.setProvider(window.ethereum);
+    this.provider = window.ethereum;
+    this.web3.setProvider(this.provider);
     this.web3.eth.getChainId().then(this._chainId.set);
     this.web3.eth.getBlockNumber().then(this._blockNumber.set);
 
@@ -49,15 +47,7 @@ export class Web3Service implements OnDestroy {
         });
       });
 
-    window.ethereum.on('chainChanged', this.handleChainChanged);
-  }
-
-  async getAccounts(): Promise<string[]> {
-    return await this.web3.eth.getAccounts();
-  }
-
-  async requestAccounts(): Promise<string[]> {
-    return await this.web3.eth.requestAccounts();
+    this.provider.on('chainChanged', this.handleChainChanged);
   }
 
   ngOnDestroy(): void {
@@ -65,8 +55,8 @@ export class Web3Service implements OnDestroy {
       this.blockNumberSubscription.unsubscribe();
     }
 
-    if (window.ethereum) {
-      window.ethereum.removeListener('chainChanged', this.handleChainChanged);
+    if (this.provider) {
+      this.provider.removeListener('chainChanged', this.handleChainChanged);
     }
   }
 

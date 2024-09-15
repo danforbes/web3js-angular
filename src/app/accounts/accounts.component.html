@@ -1,7 +1,7 @@
-<p>Selected account: {{ selectedAccount() }}</p>
+<div>Selected account: {{ selectedAccount() }}</div>
 @if (accounts().length > 1) {
-  <p>Other available accounts:</p>
-  <p *ngFor="let account of accounts() | slice: 1; index as idx">
+  <div>Other available accounts:</div>
+  <div *ngFor="let account of accounts() | slice: 1; index as idx">
     Account #{{ idx + 1 }}: {{ account }}
-  </p>
+  </div>
 }

@@ -7,34 +7,37 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Web3Service } from './web3.service';
-import { ProviderAccounts } from 'web3';
+import { type ProviderAccounts, type Web3 } from 'web3';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AccountsService implements OnDestroy {
+  private web3: Web3;
+
   private _accounts: WritableSignal<string[]> = signal([]);
   accounts: Signal<string[]> = this._accounts.asReadonly();
-  selectedAccount: Signal<string> = computed(() => this.accounts()[0]);
-
   private accountsChangedHandler: (accounts: ProviderAccounts) => void =
     this.handleAccountsChanged.bind(this);
 
-  constructor(private web3: Web3Service) {
-    if (!window.ethereum) {
+  selectedAccount: Signal<string> = computed(() => this.accounts()[0]);
+
+  constructor(private web3Service: Web3Service) {
+    if (web3Service.provider === undefined) {
       throw new Error('No Web3 provider.');
     }
 
-    this.web3.requestAccounts().then(this._accounts.set);
-    window.ethereum.on('accountsChanged', this.accountsChangedHandler);
+    this.web3 = web3Service.web3;
+    this.web3.eth.requestAccounts().then(this._accounts.set);
+    web3Service.provider.on('accountsChanged', this.accountsChangedHandler);
   }
 
   ngOnDestroy(): void {
-    if (!window.ethereum) {
+    if (!this.web3Service.provider) {
       return;
     }
 
-    window.ethereum.removeListener(
+    this.web3Service.provider.removeListener(
       'accountsChanged',
       this.accountsChangedHandler,
     );

@@ -8,7 +8,7 @@ import {
 import { RouterOutlet } from '@angular/router';
 import { Web3Service } from './web3/web3.service';
 import { AccountsComponent } from './accounts/accounts.component';
-import { type ProviderAccounts } from 'web3';
+import { type ProviderAccounts, type Web3 } from 'web3';
 
 @Component({
   selector: 'app-root',
@@ -18,51 +18,53 @@ import { type ProviderAccounts } from 'web3';
   styleUrl: './app.component.css',
 })
 export class AppComponent implements OnDestroy {
+  private web3: Web3;
+
   hasProvider: boolean;
   chainId: Signal<bigint>;
   blockNumber: Signal<bigint>;
 
-  connectedAccounts: WritableSignal<boolean> = signal(false);
+  hasAccounts: WritableSignal<boolean> = signal(false);
   private accountsChangedHandler: (accounts: ProviderAccounts) => void =
     this.handleAccountsChanged.bind(this);
 
-  constructor(private web3: Web3Service) {
-    this.hasProvider = this.web3.hasProvider;
-    this.chainId = this.web3.chainId;
-    this.blockNumber = this.web3.blockNumber;
-    this.web3.getAccounts().then((accounts: string[]) => {
-      if (accounts.length === 0) {
-        return;
-      }
+  constructor(private web3Service: Web3Service) {
+    this.web3 = web3Service.web3;
+    this.chainId = web3Service.chainId;
+    this.blockNumber = web3Service.blockNumber;
+    if (!web3Service.provider) {
+      this.hasProvider = false;
+      return;
+    }
 
-      this.connectedAccounts.set(true);
+    this.hasProvider = true;
+    this.web3.eth.getAccounts().then((accounts: string[]) => {
+      this.hasAccounts.set(accounts.length !== 0);
     });
 
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', this.accountsChangedHandler);
-    }
+    web3Service.provider.on('accountsChanged', this.accountsChangedHandler);
   }
 
   async requestAccounts(): Promise<void> {
     try {
-      await this.web3.requestAccounts();
+      await this.web3.eth.requestAccounts();
     } catch {
       console.error('Failed to request accounts.');
     }
   }
 
   ngOnDestroy(): void {
-    if (!window.ethereum) {
+    if (!this.web3Service.provider) {
       return;
     }
 
-    window.ethereum.removeListener(
+    this.web3Service.provider.removeListener(
       'accountsChanged',
       this.accountsChangedHandler,
     );
   }
 
   private handleAccountsChanged(accounts: ProviderAccounts) {
-    this.connectedAccounts.set(accounts.length !== 0);
+    this.hasAccounts.set(accounts.length !== 0);
   }
 }
