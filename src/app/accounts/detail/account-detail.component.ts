@@ -95,14 +95,19 @@ export class AccountDetailComponent implements OnDestroy {
         status.set(`Sending ${value} wei to ${to}`);
       })
       .on('transactionHash', (data) => {
-        status.set(`${value} wei sent to ${to} with hash ${data}`);
+        status.set(`Sending ${value} wei to ${to} [Hash: ${data}]`);
       })
       .on('receipt', (data) => {
-        status.set(`${value} wei sent to ${to} in block #${data.blockNumber}`);
+        status.set(
+          `${value} wei sent to ${to} [Hash: ${data.transactionHash} Block #: ${data.blockNumber}]`,
+        );
       })
       .on('confirmation', (data) => {
         const numConfirmations: bigint = data.confirmations;
-        status.set(`${value} sent to ${to} confirmed (${numConfirmations})`);
+        const receipt = data.receipt;
+        status.set(
+          `${value} wei sent to ${to} [Hash: ${receipt.transactionHash} Block #: ${receipt.blockNumber} Confirmations: ${numConfirmations}]`,
+        );
         if (numConfirmations > 5) {
           transferEvent.removeAllListeners();
         }
