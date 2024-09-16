@@ -1,21 +1,45 @@
 <main>
   <h1>Web3.js + Angular Template</h1>
+  <div>
+    This is a sample project that demonstrates using
+    <a href="https://web3js.org/">Web3.js</a> with the
+    <a href="https://angular.dev/">Angular</a> front-end framework.
+    <ul>
+      <li><a href="https://docs.web3js.org/">Web3.js Docs</a></li>
+      <li><a href="https://angular.dev/overview">Angular Docs</a></li>
+    </ul>
+    Learn more about this project and its design by referring to the
+    <a href="https://github.com/danforbes/web3js-angular/blob/main/README.md"
+      >GitHub README</a
+    >.
+  </div>
   @if (!hasProvider) {
+    <br />
     <div>No Ethereum providers - install a browser extension wallet:</div>
-    <div><a href="https://www.enkrypt.com/download.html">Enkrypt</a></div>
-    <div><a href="https://www.exodus.com/download/">Exodus</a></div>
-    <div><a href="https://metamask.io/download/">MetaMask</a></div>
-    <div><a href="https://trustwallet.com/download">Trust Wallet</a></div>
+    <ul>
+      <li><a href="https://www.enkrypt.com/download.html">Enkrypt</a></li>
+      <li><a href="https://www.exodus.com/download/">Exodus</a></li>
+      <li><a href="https://metamask.io/download/">MetaMask</a></li>
+      <li><a href="https://trustwallet.com/download">Trust Wallet</a></li>
+    </ul>
   } @else {
+    <h2>Network Details</h2>
     <div>Chain ID: {{ chainId() }}</div>
     <div>Block number: {{ blockNumber() }}</div>
+    <h2>Accounts</h2>
     @if (!hasAccounts()) {
       <button (click)="requestAccounts()">Connect Accounts</button>
-    } @else {
       <br />
+    } @else {
       <app-accounts></app-accounts>
     }
   }
+  <br />
+  <i
+    >This project was generated with
+    <a href="https://github.com/angular/angular-cli">Angular CLI</a> version
+    18.2.3.</i
+  >
 </main>
 
 <router-outlet />

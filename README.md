@@ -1,27 +1,63 @@
-# Web3jsAngular
+# Web3.js + Angular Sample
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.3.
+This is a sample project that demonstrates using [Web3.js](https://web3js.org/) with the
+[Angular](https://angular.dev/) front-end framework.
 
-## Development server
+- [Web3.js Docs](https://docs.web3js.org/)
+- [Angular Docs](https://angular.dev/overview)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version
+18.2.3.
 
-## Code scaffolding
+## Project Design
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+This sample project comprises two [injectable services](https://angular.dev/guide/di) and three
+[components](https://angular.dev/essentials/components). To demonstrate best practices the services
+and components that register event-handlers implement the
+[Angular `OnDestroy` interface](https://angular.dev/api/core/OnDestroy#) and use the `ngOnDestroy`
+function to clean up the event-handlers they register.
 
-## Build
+### Web3 Service
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+The Web3 service is a [singleton service](https://angular.dev/guide/ngmodules/singleton-services#)
+that is defined in [./src/app/web3/web3.service.ts](./src/app/web3/web3.service.ts). It can be
+consumed by components and other services that depend on Web3.js capabilities.
 
-## Running unit tests
+The Web3 service exposes an instance of the Web3.js
+[`Web3` class](https://docs.web3js.org/api/web3/class/Web3) as well as a `provider` property that
+exposes the [injected](https://docs.web3js.org/guides/web3_providers_guide/#injected-provider)
+[EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) provider. This service is designed to function
+without a provider, which preserves access to the offline capabilities of Web3.js (e.g. the Web3.js
+[`utils` package](https://docs.web3js.org/libdocs/Utils)). The Web3 service listens for
+[EIP-1193 `chainChanged` events](https://docs.metamask.io/wallet/reference/provider-api/#chainchanged)
+and handles them by reloading the page. For demonstration purposes, the Web3 service defines two
+[signals](https://angular.dev/guide/signals): a chain ID signal and a block number signal.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Accounts Service
 
-## Running end-to-end tests
+The accounts service is defined in
+[./src/app/web3/accounts.service.ts](./src/app/web3/accounts.service.ts) and demonstrates using the
+Web3 service to provide account-related capabilities. Unlike the Web3 service, the accounts service
+will not function without an injected provider. The accounts service exposes two signals: a list of
+all of the available accounts and the selected account. This service exposes a static function for
+validating addresses and methods for getting the balance of an account and transferring ETH from one
+account to another.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+### App Component
 
-## Further help
+The app component uses the Web3 service to check if an injected provider is present. If no provider
+is present, the app component displays a list of browser extension wallets. If a provider is
+present, the app component displays the chain ID and current block number. If account access has not
+been granted, the app component displays a button that can be used to request account access. If
+account access has been granted, the app component displays information about the available
+accounts.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+### Accounts Component
+
+The accounts component lists the selected account and the other available accounts. An account
+details component is provided for each account.
+
+### Account Details Component
+
+The account details component displays the balance of an account as well as a form for transferring
+ETH from that account to another account.

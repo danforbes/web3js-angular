@@ -18,8 +18,8 @@ import { type NewHeadsSubscription } from 'web3-eth';
   providedIn: 'root',
 })
 export class Web3Service implements OnDestroy {
-  provider: EIP1193Provider<Web3APISpec> | undefined;
   web3: Web3 = new Web3();
+  provider: EIP1193Provider<Web3APISpec> | undefined;
 
   private _chainId: WritableSignal<bigint> = signal(0n);
   chainId: Signal<bigint> = this._chainId.asReadonly();

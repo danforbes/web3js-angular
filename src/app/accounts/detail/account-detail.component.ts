@@ -16,15 +16,10 @@ import {
   type ValidationErrors,
   Validators,
 } from '@angular/forms';
-import {
-  type DataFormat,
-  type TransactionReceipt,
-  Web3PromiEvent,
-  type Address,
-} from 'web3';
+import { type Address } from 'web3';
 import { AccountsService } from '../../web3/accounts.service';
 import { Web3Service } from '../../web3/web3.service';
-import { SendTransactionEvents, type NewHeadsSubscription } from 'web3-eth';
+import { type NewHeadsSubscription } from 'web3-eth';
 import { NgFor } from '@angular/common';
 
 @Component({
@@ -46,8 +41,6 @@ export class AccountDetailComponent implements OnDestroy {
   balance: WritableSignal<bigint> = signal(0n);
   transactions: Signal<string>[] = [];
 
-  private newBlockSubscription: NewHeadsSubscription | undefined;
-
   transferForm: FormGroup = new FormGroup({
     to: new FormControl<Address | undefined>(undefined, [
       AccountDetailComponent.addressValidator,
@@ -56,9 +49,11 @@ export class AccountDetailComponent implements OnDestroy {
     amount: new FormControl<bigint | undefined>(undefined, Validators.required),
   });
 
+  private newBlockSubscription: NewHeadsSubscription | undefined;
+
   constructor(
     private accountsService: AccountsService,
-    private web3Service: Web3Service,
+    web3Service: Web3Service,
   ) {
     effect(() => {
       accountsService.getBalance(this.address()).then(this.balance.set);
@@ -74,48 +69,16 @@ export class AccountDetailComponent implements OnDestroy {
       });
   }
 
-  transfer() {
+  transfer(): void {
     const to: Address = this.transferForm.controls['to'].value;
     const value: bigint = this.transferForm.controls['amount'].value;
-    this.transferForm.reset();
-    const status: WritableSignal<string> = signal(
-      `Preparing to send ${value} wei to ${to}`,
+    const status: Signal<string> = this.accountsService.transfer(
+      this.address(),
+      to,
+      value,
     );
     this.transactions.push(status);
-    const transferEvent: Web3PromiEvent<
-      TransactionReceipt,
-      SendTransactionEvents<DataFormat>
-    > = this.web3Service.web3.eth
-      .sendTransaction({
-        from: this.address(),
-        to,
-        value,
-      })
-      .on('sent', () => {
-        status.set(`Sending ${value} wei to ${to}`);
-      })
-      .on('transactionHash', (data) => {
-        status.set(`Sending ${value} wei to ${to} [Hash: ${data}]`);
-      })
-      .on('receipt', (data) => {
-        status.set(
-          `${value} wei sent to ${to} [Hash: ${data.transactionHash} Block #: ${data.blockNumber}]`,
-        );
-      })
-      .on('confirmation', (data) => {
-        const numConfirmations: bigint = data.confirmations;
-        const receipt = data.receipt;
-        status.set(
-          `${value} wei sent to ${to} [Hash: ${receipt.transactionHash} Block #: ${receipt.blockNumber} Confirmations: ${numConfirmations}]`,
-        );
-        if (numConfirmations > 5) {
-          transferEvent.removeAllListeners();
-        }
-      })
-      .on('error', (data) => {
-        status.set(`Error sending ${value} wei to ${to}: ${data}`);
-        transferEvent.removeAllListeners();
-      });
+    this.transferForm.reset();
   }
 
   ngOnDestroy(): void {

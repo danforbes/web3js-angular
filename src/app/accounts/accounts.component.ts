@@ -13,8 +13,8 @@ import { AccountDetailComponent } from './detail/account-detail.component';
 export class AccountsComponent {
   accounts: Signal<string[]>;
   selectedAccount: Signal<string>;
-  constructor(private service: AccountsService) {
-    this.accounts = this.service.accounts;
-    this.selectedAccount = this.service.selectedAccount;
+  constructor(service: AccountsService) {
+    this.accounts = service.accounts;
+    this.selectedAccount = service.selectedAccount;
   }
 }

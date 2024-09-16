@@ -7,7 +7,15 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Web3Service } from './web3.service';
-import { Address, type ProviderAccounts, type Web3 } from 'web3';
+import {
+  Address,
+  type DataFormat,
+  type TransactionReceipt,
+  type Web3PromiEvent,
+  type ProviderAccounts,
+  type Web3,
+} from 'web3';
+import { SendTransactionEvents } from 'web3-eth';
 
 @Injectable({
   providedIn: 'root',
@@ -42,6 +50,48 @@ export class AccountsService implements OnDestroy {
     }
 
     return this.web3.eth.getBalance(address);
+  }
+
+  transfer(from: Address, to: Address, value: bigint): Signal<string> {
+    const status: WritableSignal<string> = signal(
+      `Preparing to send ${value} wei to ${to}`,
+    );
+    const transferEvent: Web3PromiEvent<
+      TransactionReceipt,
+      SendTransactionEvents<DataFormat>
+    > = this.web3Service.web3.eth
+      .sendTransaction({
+        from,
+        to,
+        value,
+      })
+      .on('sent', () => {
+        status.set(`Sending ${value} wei to ${to}`);
+      })
+      .on('transactionHash', (data) => {
+        status.set(`Sending ${value} wei to ${to} [Hash: ${data}]`);
+      })
+      .on('receipt', (data) => {
+        status.set(
+          `${value} wei sent to ${to} [Hash: ${data.transactionHash} Block #: ${data.blockNumber}]`,
+        );
+      })
+      .on('confirmation', (data) => {
+        const numConfirmations: bigint = data.confirmations;
+        const receipt = data.receipt;
+        status.set(
+          `${value} wei sent to ${to} [Hash: ${receipt.transactionHash} Block #: ${receipt.blockNumber} Confirmations: ${numConfirmations}]`,
+        );
+        if (numConfirmations > 5) {
+          transferEvent.removeAllListeners();
+        }
+      })
+      .on('error', (data) => {
+        status.set(`Error sending ${value} wei to ${to}: ${data}`);
+        transferEvent.removeAllListeners();
+      });
+
+    return status;
   }
 
   ngOnDestroy(): void {
